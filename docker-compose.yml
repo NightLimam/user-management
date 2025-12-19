@@ -1,0 +1,54 @@
+version: '3.8'
+
+
+services:
+mysql:
+image: mysql:8.0
+container_name: user-management-mysql
+environment:
+MYSQL_ROOT_PASSWORD: rootpassword
+MYSQL_DATABASE: user_management_db
+ports:
+- "3306:3306"
+volumes:
+- mysql_data:/var/lib/mysql
+- ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+networks:
+- user-management-network
+
+
+backend:
+build: ./backend
+container_name: user-management-backend
+depends_on:
+- mysql
+environment:
+SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_management_db?createDatabaseIfNotExist=true
+SPRING_DATASOURCE_USERNAME: root
+SPRING_DATASOURCE_PASSWORD: rootpassword
+GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+ports:
+- "8080:8080"
+networks:
+- user-management-network
+
+
+frontend:
+build: ./frontend
+container_name: user-management-frontend
+depends_on:
+- backend
+ports:
+- "80:80"
+networks:
+- user-management-network
+
+
+volumes:
+mysql_data:
+
+
+networks:
+user-management-network:
+driver: bridge
